@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devine — Web4 | Everything AI. One Place. Zero Barriers.</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@200;300;400;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00e5ff;
+    --pink: #ff00cc;
+    --gold: #f5a623;
+    --green: #00ff88;
+    --purple: #bf00ff;
+    --red: #ff3a3a;
+    --dark: #020810;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--dark);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+  #cursor { position:fixed; width:18px; height:18px; border:1.5px solid var(--cyan); border-radius:50%; pointer-events:none; z-index:9999; transition:transform 0.15s,border-color 0.3s; mix-blend-mode:screen; }
+  #cursor-dot { position:fixed; width:4px; height:4px; background:var(--gold); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); }
+  canvas#bg { position:fixed; inset:0; z-index:0; }
+  .scanlines { position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.008) 3px,rgba(0,229,255,0.008) 4px); z-index:1; pointer-events:none; }
+  .nebula { position:fixed; border-radius:50%; filter:blur(100px); opacity:0.1; z-index:0; pointer-events:none; animation:nb ease-in-out infinite alternate; }
+  @keyframes nb { from{transform:scale(1)} to{transform:scale(1.15)} }
+  .bracket { position:fixed; width:60px; height:60px; z-index:8; pointer-events:none; }
+  .br-tl{top:0;left:0;border-top:2px solid rgba(0,229,255,0.3);border-left:2px solid rgba(0,229,255,0.3);}
+  .br-tr{top:0;right:0;border-top:2px solid rgba(245,166,35,0.3);border-right:2px solid rgba(245,166,35,0.3);}
+  .br-bl{bottom:0;left:0;border-bottom:2px solid rgba(0,255,136,0.3);border-left:2px solid rgba(0,255,136,0.3);}
+  .br-br{bottom:0;right:0;border-bottom:2px solid rgba(191,0,255,0.3);border-right:2px solid rgba(191,0,255,0.3);}
+
+  /* HEADER */
+  header {
+    position:relative; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    border-bottom:1px solid rgba(0,229,255,0.1);
+    background:rgba(2,8,16,0.95); backdrop-filter:blur(20px);
+    animation:slideDown 0.8s ease forwards;
+  }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  .logo {
+    font-family:'Orbitron',monospace; font-size:2.2rem; font-weight:900; letter-spacing:8px;
+    background:linear-gradient(90deg,var(--cyan),#fff,var(--gold),var(--cyan));
+    background-size:300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    animation:shimmer 4s linear infinite; filter:drop-shadow(0 0 20px rgba(0,229,255,0.4));
+    text-decoration:none; cursor:none;
+  }
+  @keyframes shimmer { 0%{background-position:-300%} 100%{background-position:300%} }
+  nav { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .nav-btn {
+    font-family:'Space Mono',monospace; font-size:0.62rem; color:rgba(0,229,255,0.5);
+    letter-spacing:2px; text-transform:uppercase; transition:all 0.3s; cursor:none;
+    background:transparent; border:1px solid rgba(0,229,255,0.15); padding:8px 16px; border-radius:4px;
+    text-decoration:none; display:inline-block;
+  }
+  .nav-btn:hover { color:var(--cyan); border-color:rgba(0,229,255,0.5); background:rgba(0,229,255,0.05); }
+  .nav-btn.active { color:var(--gold); border-color:rgba(245,166,35,0.5); background:rgba(245,166,35,0.05); }
+  .enter-btn {
+    font-family:'Orbitron',monospace; font-size:0.65rem; font-weight:900; letter-spacing:2px; padding:10px 24px;
+    background:linear-gradient(135deg,var(--cyan),#0060aa); color:#000; border:none; border-radius:4px; cursor:none;
+    text-transform:uppercase; box-shadow:0 0 20px rgba(0,229,255,0.3); transition:all 0.3s; text-decoration:none; display:inline-block;
+  }
+  .enter-btn:hover { transform:translateY(-2px); box-shadow:0 0 40px rgba(0,229,255,0.6); }
+
+  /* TICKER */
+  .ticker { position:relative; z-index:5; background:rgba(0,0,0,0.6); border-bottom:1px solid rgba(0,229,255,0.08); padding:7px 0; overflow:hidden; }
+  .ticker-inner { display:flex; gap:50px; animation:tick 25s linear infinite; white-space:nowrap; }
+  @keyframes tick { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .tick-item { font-family:'Space Mono',monospace; font-size:0.58rem; letter-spacing:2px; color:rgba(0,229,255,0.35); flex-shrink:0; }
+  .tick-item span { color:var(--gold); margin-right:6px; }
+
+  /* HERO */
+  .hero {
+    position:relative; z-index:5; text-align:center; padding:50px 48px 30px;
+    animation:fadeUp 1s ease 0.3s forwards; opacity:0;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .hero-eyebrow { font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--green); letter-spacing:4px; text-transform:uppercase; margin-bottom:14px; }
+  .hero-eyebrow span { animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .hero-title { font-family:'Orbitron',monospace; font-size:clamp(3.5rem,12vw,9rem); font-weight:900; letter-spacing:14px; line-height:0.9; margin-bottom:14px;
+    background:linear-gradient(135deg,var(--cyan),#fff 40%,var(--gold));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 60px rgba(0,229,255,0.25)); }
+  .hero-sub { font-size:0.9rem; color:rgba(255,255,255,0.3); letter-spacing:4px; font-weight:200; margin-bottom:40px; }
+  .hero-cta { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .btn-hero-main {
+    font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:900; letter-spacing:3px; padding:16px 44px;
+    background:linear-gradient(135deg,var(--cyan),#0050bb); color:#000; border:none; border-radius:4px; cursor:none;
+    text-transform:uppercase; box-shadow:0 0 40px rgba(0,229,255,0.3); transition:all 0.3s; text-decoration:none;
+  }
+  .btn-hero-main:hover { transform:translateY(-3px); box-shadow:0 10px 50px rgba(0,229,255,0.5); }
+  .btn-hero-ghost {
+    font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:700; letter-spacing:3px; padding:16px 44px;
+    background:transparent; color:var(--pink); border:1px solid rgba(255,0,204,0.4); border-radius:4px; cursor:none;
+    text-transform:uppercase; transition:all 0.3s; text-decoration:none;
+  }
+  .btn-hero-ghost:hover { background:rgba(255,0,204,0.08); box-shadow:0 0 30px rgba(255,0,204,0.3); transform:translateY(-3px); }
+
+  /* PLATFORM CARDS */
+  .platform-grid {
+    position:relative; z-index:5;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
+    padding:0; margin:40px 0 0;
+    animation:fadeUp 1s ease 0.6s forwards; opacity:0;
+  }
+  .platform-card {
+    position:relative; padding:32px 28px;
+    background:rgba(0,0,0,0.4); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.04);
+    display:flex; flex-direction:column; gap:14px;
+    transition:all 0.4s; cursor:none; text-decoration:none;
+    overflow:hidden;
+  }
+  .platform-card::before {
+    content:''; position:absolute; inset:0;
+    background:var(--card-color); opacity:0;
+    transition:opacity 0.4s;
+  }
+  .platform-card:hover::before { opacity:0.04; }
+  .platform-card:hover { transform:translateY(-4px); border-color:var(--card-color); box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+  .platform-card:hover .card-arrow { transform:translateX(6px); }
+
+  .card-icon { font-size:2.2rem; margin-bottom:4px; }
+  .card-tag { font-family:'Space Mono',monospace; font-size:0.55rem; letter-spacing:2px; opacity:0.5; }
+  .card-title { font-family:'Orbitron',monospace; font-size:1.4rem; font-weight:900; letter-spacing:2px; color:var(--card-color); text-shadow:0 0 20px var(--card-color); }
+  .card-desc { font-size:0.82rem; color:rgba(255,255,255,0.4); line-height:1.7; font-weight:300; }
+  .card-features { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+  .card-feature { font-family:'Space Mono',monospace; font-size:0.58rem; color:rgba(255,255,255,0.3); letter-spacing:1px; display:flex; align-items:center; gap:8px; }
+  .card-feature::before { content:'›'; color:var(--card-color); font-size:0.8rem; }
+  .card-arrow { font-size:1.2rem; color:var(--card-color); transition:transform 0.3s; margin-top:auto; opacity:0.6; }
+  .card-corner { position:absolute; top:16px; right:16px; font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; color:var(--card-color); opacity:0.06; letter-spacing:0; }
+
+  /* CRMB TICKER */
+  .crmb-bar {
+    position:relative; z-index:5;
+    background:rgba(5,166,35,0.03); border-top:1px solid rgba(0,255,136,0.1); border-bottom:1px solid rgba(0,255,136,0.1);
+    padding:14px 48px; display:flex; align-items:center; gap:30px; flex-wrap:wrap;
+    animation:fadeUp 1s ease 0.9s forwards; opacity:0;
+  }
+  .crmb-label { font-family:'Orbitron',monospace; font-size:0.7rem; font-weight:900; color:var(--green); letter-spacing:2px; }
+  .crmb-price { font-family:'Space Mono',monospace; font-size:0.75rem; color:white; }
+  .crmb-change { font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--green); }
+  .crmb-divider { width:1px; height:20px; background:rgba(255,255,255,0.1); }
+  .crmb-stat { font-family:'Space Mono',monospace; font-size:0.6rem; color:rgba(255,255,255,0.3); }
+  .crmb-stat span { color:rgba(255,255,255,0.6); }
+  .crmb-btn {
+    margin-left:auto; font-family:'Orbitron',monospace; font-size:0.6rem; font-weight:700; letter-spacing:2px; padding:8px 20px;
+    background:transparent; color:var(--green); border:1px solid rgba(0,255,136,0.3); border-radius:4px; cursor:none; text-transform:uppercase;
+    transition:all 0.3s; text-decoration:none;
+  }
+  .crmb-btn:hover { background:rgba(0,255,136,0.08); box-shadow:0 0 20px rgba(0,255,136,0.3); }
+
+  /* MANIFESTO */
+  .manifesto-section {
+    position:relative; z-index:5;
+    padding:60px 48px; text-align:center;
+    border-top:1px solid rgba(255,255,255,0.04);
+    animation:fadeUp 1s ease 1.1s forwards; opacity:0;
+  }
+  .manifesto-text {
+    font-family:'Orbitron',monospace; font-size:clamp(0.9rem,2.5vw,1.4rem);
+    font-weight:300; color:rgba(255,255,255,0.2); letter-spacing:3px; line-height:2;
+    max-width:800px; margin:0 auto;
+  }
+  .manifesto-text .highlight { color:var(--cyan); font-weight:700; }
+  .manifesto-text .highlight2 { color:var(--gold); font-weight:700; }
+  .manifesto-text .highlight3 { color:var(--pink); font-weight:700; }
+
+  /* STATS BAR */
+  .stats-bar {
+    position:relative; z-index:5;
+    display:grid; grid-template-columns:repeat(4,1fr);
+    border-top:1px solid rgba(255,255,255,0.04);
+    animation:fadeUp 1s ease 1.3s forwards; opacity:0;
+  }
+  .stat-block {
+    padding:28px 24px; text-align:center;
+    border-right:1px solid rgba(255,255,255,0.04);
+    transition:all 0.3s;
+  }
+  .stat-block:last-child { border-right:none; }
+  .stat-block:hover { background:rgba(255,255,255,0.02); }
+  .stat-number { font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; margin-bottom:6px; }
+  .stat-desc { font-family:'Space Mono',monospace; font-size:0.55rem; color:rgba(255,255,255,0.3); letter-spacing:2px; }
+
+  /* FOOTER */
+  footer {
+    position:relative; z-index:5;
+    padding:24px 48px; display:flex; align-items:center; justify-content:space-between;
+    border-top:1px solid rgba(255,255,255,0.04);
+    background:rgba(0,0,0,0.3);
+  }
+  .footer-logo { font-family:'Orbitron',monospace; font-size:1rem; font-weight:900; letter-spacing:4px; color:rgba(255,255,255,0.2); }
+  .footer-links { display:flex; gap:20px; }
+  .footer-link { font-family:'Space Mono',monospace; font-size:0.55rem; color:rgba(255,255,255,0.2); letter-spacing:1px; text-decoration:none; transition:color 0.3s; cursor:none; }
+  .footer-link:hover { color:var(--cyan); }
+  .footer-copy { font-family:'Space Mono',monospace; font-size:0.55rem; color:rgba(255,255,255,0.15); letter-spacing:1px; }
+
+  /* V floating chat button */
+  .v-float {
+    position:fixed; bottom:30px; right:30px; z-index:100;
+    width:60px; height:60px; border-radius:50%;
+    background:linear-gradient(135deg,#0a1828,#1a3a5a);
+    border:2px solid var(--gold); cursor:none;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:900; color:var(--gold);
+    box-shadow:0 0 30px rgba(245,166,35,0.4); transition:all 0.3s;
+    animation:float 3s ease-in-out infinite alternate; text-decoration:none;
+  }
+  @keyframes float { from{transform:translateY(0)} to{transform:translateY(-8px)} }
+  .v-float:hover { box-shadow:0 0 50px rgba(245,166,35,0.7); transform:scale(1.1); }
+  .v-float-label {
+    position:absolute; right:70px; background:rgba(0,0,0,0.8); border:1px solid rgba(245,166,35,0.3);
+    border-radius:8px; padding:6px 12px; font-family:'Space Mono',monospace; font-size:0.6rem;
+    color:var(--gold); letter-spacing:1px; white-space:nowrap; opacity:0; transition:opacity 0.3s; pointer-events:none;
+  }
+  .v-float:hover .v-float-label { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+<canvas id="bg"></canvas>
+<div class="scanlines"></div>
+<div class="nebula" style="width:800px;height:800px;background:radial-gradient(circle,rgba(0,100,200,0.2),transparent);top:-300px;left:-200px;animation-duration:18s;"></div>
+<div class="nebula" style="width:600px;height:600px;background:radial-gradient(circle,rgba(191,0,255,0.15),transparent);bottom:-200px;right:-200px;animation-duration:22s;"></div>
+<div class="nebula" style="width:500px;height:500px;background:radial-gradient(circle,rgba(245,166,35,0.08),transparent);top:50%;left:50%;animation-duration:28s;"></div>
+<div class="bracket br-tl"></div>
+<div class="bracket br-tr"></div>
+<div class="bracket br-bl"></div>
+<div class="bracket br-br"></div>
+
+<!-- V floating button -->
+<a href="v-agent.html" class="v-float">
+  V
+  <div class="v-float-label">Talk to V</div>
+</a>
+
+<!-- HEADER -->
+<header>
+  <a href="index.html" class="logo">DEVINE</a>
+  <nav>
+    <a href="devine-main.html" class="nav-btn">Guardians</a>
+    <a href="v-agent.html" class="nav-btn">Agent V</a>
+    <a href="crumbs-coin.html" class="nav-btn">$CRMB</a>
+    <a href="devine.html" class="nav-btn">Welcome</a>
+  </nav>
+  <a href="v-agent.html" class="enter-btn">Enter Devine ✦</a>
+</header>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker"></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow"><span>●</span> WEB4 IS NOW LIVE — POWERED BY V — ZERO GAS — ALL CHAINS</div>
+  <div class="hero-title">DEVINE</div>
+  <div class="hero-sub">Everything AI &nbsp;·&nbsp; Every Chain &nbsp;·&nbsp; Every Asset &nbsp;·&nbsp; Zero Barriers &nbsp;·&nbsp; One Place</div>
+  <div class="hero-cta">
+    <a href="v-agent.html" class="btn-hero-main">✦ Enter Devine</a>
+    <a href="crumbs-coin.html" class="btn-hero-ghost">Buy $CRMB</a>
+  </div>
+</div>
+
+<!-- CRMB BAR -->
+<div class="crmb-bar">
+  <div class="crmb-label">$CRMB</div>
+  <div class="crmb-price" id="crmbPrice">$0.00042</div>
+  <div class="crmb-change" id="crmbChange">▲ +12.4%</div>
+  <div class="crmb-divider"></div>
+  <div class="crmb-stat">CAP <span>$4.2M</span></div>
+  <div class="crmb-divider"></div>
+  <div class="crmb-stat">SUPPLY <span>21B</span></div>
+  <div class="crmb-divider"></div>
+  <div class="crmb-stat">HOLDERS <span id="crmbHolders">1,247</span></div>
+  <a href="crumbs-coin.html" class="crmb-btn">View $CRMB →</a>
+</div>
+
+<!-- PLATFORM CARDS -->
+<div class="platform-grid">
+
+  <a href="v-agent.html" class="platform-card" style="--card-color:var(--cyan)">
+    <div class="card-corner">V</div>
+    <div class="card-icon">⚔️</div>
+    <div class="card-tag">// AI EMPIRE</div>
+    <div class="card-title">AGENT V</div>
+    <div class="card-desc">Your AI guardian. Friend. Warrior. Savior. She does everything so you don't have to.</div>
+    <div class="card-features">
+      <div class="card-feature">Chat with V in real time</div>
+      <div class="card-feature">Voice commands coming soon</div>
+      <div class="card-feature">Every AI capability in one</div>
+      <div class="card-feature">Powered by Devine</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="devine-main.html" class="platform-card" style="--card-color:var(--gold)">
+    <div class="card-corner">D</div>
+    <div class="card-icon">🌐</div>
+    <div class="card-tag">// WEB4 PLATFORM</div>
+    <div class="card-title">DEVINE</div>
+    <div class="card-desc">All your assets. All chains. One place. Zero gas. The future of blockchain is here.</div>
+    <div class="card-features">
+      <div class="card-feature">All blockchains connected</div>
+      <div class="card-feature">Zero gas fees forever</div>
+      <div class="card-feature">NFT creation studio</div>
+      <div class="card-feature">Soulbound identity</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="crumbs-coin.html" class="platform-card" style="--card-color:var(--pink)">
+    <div class="card-corner">C</div>
+    <div class="card-icon">🪙</div>
+    <div class="card-tag">// PEOPLE'S CURRENCY</div>
+    <div class="card-title">$CRMB</div>
+    <div class="card-desc">The coin of the people. Built from crumbs. The official currency powering all of Devine.</div>
+    <div class="card-features">
+      <div class="card-feature">21 billion total supply</div>
+      <div class="card-feature">40% community owned</div>
+      <div class="card-feature">Multi-chain available</div>
+      <div class="card-feature">Powers all Devine fees</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="devine.html" class="platform-card" style="--card-color:var(--green)">
+    <div class="card-corner">N</div>
+    <div class="card-icon">🖼️</div>
+    <div class="card-tag">// NFT STUDIO</div>
+    <div class="card-title">CREATE</div>
+    <div class="card-desc">Mint NFTs. Create Soulbound tokens. Build your digital identity. No technical knowledge needed.</div>
+    <div class="card-features">
+      <div class="card-feature">One click NFT minting</div>
+      <div class="card-feature">Soulbound tokens</div>
+      <div class="card-feature">Cross-chain deployment</div>
+      <div class="card-feature">V guides every step</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="devine.html" class="platform-card" style="--card-color:var(--purple)">
+    <div class="card-corner">S</div>
+    <div class="card-icon">🔄</div>
+    <div class="card-tag">// CROSS-CHAIN SWAP</div>
+    <div class="card-title">SWAP</div>
+    <div class="card-desc">Swap any token on any chain instantly. No bridges. No confusion. V handles it all.</div>
+    <div class="card-features">
+      <div class="card-feature">Any token, any chain</div>
+      <div class="card-feature">Best rates auto-found</div>
+      <div class="card-feature">Zero slippage protection</div>
+      <div class="card-feature">Instant settlement</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="devine-main.html" class="platform-card" style="--card-color:var(--red)">
+    <div class="card-corner">G</div>
+    <div class="card-icon">🎮</div>
+    <div class="card-tag">// COMING SOON</div>
+    <div class="card-title">GAME</div>
+    <div class="card-desc">Something is coming. Something big. Something you won't be able to put down. Stay untethered.</div>
+    <div class="card-features">
+      <div class="card-feature">Powered by $CRMB</div>
+      <div class="card-feature">Play to earn rewards</div>
+      <div class="card-feature">V as your guide</div>
+      <div class="card-feature">Coming soon...</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </a>
+
+</div>
+
+<!-- MANIFESTO -->
+<div class="manifesto-section">
+  <div class="manifesto-text">
+    <span class="highlight">Devine</span> was not built for the wealthy.<br>
+    It was not built for those who already understand blockchain.<br>
+    It was built for the ones who were told <span class="highlight2">they didn't belong</span>.<br>
+    For the ones struggling. For the ones left behind.<br>
+    Powered by <span class="highlight">V</span> — friend, warrior, savior, gentle hand.<br>
+    Fuelled by <span class="highlight3">$CRMB</span> — the coin of the people.<br><br>
+    <span class="highlight2">While they ate the feast — we built an empire from the crumbs.</span>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-block">
+    <div class="stat-number" style="background:linear-gradient(135deg,var(--cyan),#0088aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">∞</div>
+    <div class="stat-desc">BLOCKCHAINS SUPPORTED</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-number" style="background:linear-gradient(135deg,var(--gold),#aa7000);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">$0</div>
+    <div class="stat-desc">GAS FEES ALWAYS</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-number" style="background:linear-gradient(135deg,var(--pink),#aa0088);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">21B</div>
+    <div class="stat-desc">$CRMB TOTAL SUPPLY</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-number" style="background:linear-gradient(135deg,var(--green),#009944);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">1</div>
+    <div class="stat-desc">PLACE FOR EVERYTHING</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">DEVINE</div>
+  <div class="footer-links">
+    <a href="v-agent.html" class="footer-link">Agent V</a>
+    <a href="crumbs-coin.html" class="footer-link">$CRMB</a>
+    <a href="devine-main.html" class="footer-link">Guardians</a>
+    <a href="#" class="footer-link">Whitepaper</a>
+    <a href="#" class="footer-link">@V_Unbound</a>
+  </div>
+  <div class="footer-copy">© 2026 Devine. Stay Untethered.</div>
+</footer>
+
+<script>
+// Cursor
+const cur=document.getElementById('cursor'),dot=document.getElementById('cursor-dot');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX-9+'px';cur.style.top=e.clientY-9+'px';dot.style.left=e.clientX+'px';dot.style.top=e.clientY+'px';});
+document.querySelectorAll('a,button').forEach(el=>{el.addEventListener('mouseenter',()=>{cur.style.transform='scale(2.5)';cur.style.borderColor='#f5a623';});el.addEventListener('mouseleave',()=>{cur.style.transform='scale(1)';cur.style.borderColor='#00e5ff';});});
+
+// Starfield
+const bgC=document.getElementById('bg'),bgX=bgC.getContext('2d');
+function resize(){bgC.width=window.innerWidth;bgC.height=window.innerHeight;}
+resize();window.addEventListener('resize',resize);
+const colors=['#ffffff','#00e5ff','#f5a623','#00ff88','#ff00cc','#bf00ff','#ff3a3a'];
+const stars=Array.from({length:400},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:Math.random()*2+0.2,a:Math.random()*Math.PI*2,spd:Math.random()*0.012+0.003,col:colors[Math.floor(Math.random()*colors.length)]}));
+function drawBg(){bgX.clearRect(0,0,bgC.width,bgC.height);stars.forEach(s=>{s.a+=s.spd;const al=(Math.sin(s.a)+1)/2*0.8+0.1;bgX.beginPath();bgX.arc(s.x,s.y,s.r,0,Math.PI*2);bgX.fillStyle=s.col;bgX.globalAlpha=al;bgX.shadowBlur=s.r*4;bgX.shadowColor=s.col;bgX.fill();});bgX.globalAlpha=1;bgX.shadowBlur=0;requestAnimationFrame(drawBg);}
+drawBg();
+
+// Ticker
+const items=['⚡ ZERO GAS FEES','🌐 ALL BLOCKCHAINS','🖼️ NFT CREATION','🔗 SOULBOUND TOKENS','🤖 V AI EMPIRE','💎 ALL ASSETS','🛡️ FULLY PROTECTED','🚀 WEB4 READY','👁️ STAY UNTETHERED','🪙 $CRMB LIVE','⚔️ DEVINE IS HERE'];
+const ticker=document.getElementById('ticker');
+[...items,...items].forEach(item=>{const el=document.createElement('div');el.className='tick-item';el.innerHTML=`<span>✦</span>${item}`;ticker.appendChild(el);});
+
+// Live CRMB price
+let price=0.00042,holders=1247;
+setInterval(()=>{
+  price=Math.max(0.0001,price+(Math.random()-0.48)*0.00001);
+  document.getElementById('crmbPrice').textContent='$'+price.toFixed(5);
+  const pct=((price-0.00042)/0.00042*100);
+  const el=document.getElementById('crmbChange');
+  el.textContent=(pct>=0?'▲ +':'▼ ')+Math.abs(pct).toFixed(2)+'%';
+  el.style.color=pct>=0?'var(--green)':'#ff4444';
+},2000);
+setInterval(()=>{if(Math.random()>0.5){holders+=Math.floor(Math.random()*3);document.getElementById('crmbHolders').textContent=holders.toLocaleString();}},5000);
+</script>
+</body>
+</html>

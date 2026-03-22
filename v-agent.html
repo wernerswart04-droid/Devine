@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V — The AI Empire | Devine</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@200;300;400;600&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5a623;
+    --gold-light: #ffd700;
+    --blue-neon: #00c8ff;
+    --blue-deep: #0a1628;
+    --armor-silver: #c8d8e8;
+    --armor-dark: #1a2a3a;
+    --star-white: rgba(255,255,255,0.9);
+    --chat-bg: rgba(5, 15, 30, 0.85);
+    --msg-v: rgba(0, 80, 140, 0.4);
+    --msg-user: rgba(245, 166, 35, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #020c1a;
+    font-family: 'Exo 2', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  /* Cursor */
+  #cursor {
+    position: fixed;
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, border-color 0.3s;
+    mix-blend-mode: screen;
+  }
+  #cursor-core {
+    position: fixed;
+    width: 4px; height: 4px;
+    background: var(--blue-neon);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Canvas for stars */
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  /* Atmospheric glow */
+  .atmo {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .atmo-1 {
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(0,100,200,0.15), transparent 70%);
+    bottom: -200px; right: -100px;
+  }
+  .atmo-2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(245,166,35,0.1), transparent 70%);
+    bottom: 0; right: 200px;
+    animation: atmo-pulse 4s ease-in-out infinite alternate;
+  }
+  @keyframes atmo-pulse {
+    from { opacity: 0.6; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.15); }
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0, 200, 255, 0.012) 3px, rgba(0, 200, 255, 0.012) 4px
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Main layout */
+  .layout {
+    position: relative;
+    z-index: 3;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Top bar */
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid rgba(0,200,255,0.1);
+    background: rgba(2, 12, 26, 0.9);
+    backdrop-filter: blur(20px);
+    animation: topbar-in 0.8s ease forwards;
+  }
+  @keyframes topbar-in {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .devine-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(90deg, var(--blue-neon), #ffffff, var(--blue-neon));
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    filter: drop-shadow(0 0 20px rgba(0,200,255,0.5));
+  }
+  @keyframes shimmer {
+    0% { background-position: -200%; }
+    100% { background-position: 200%; }
+  }
+
+  .topbar-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(0,200,255,0.5);
+    letter-spacing: 2px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    background: #00ff88;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00ff88;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .v-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .v-monogram {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--armor-dark), #2a4a6a);
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--gold);
+    box-shadow: 0 0 20px rgba(245,166,35,0.4);
+    animation: v-glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes v-glow {
+    from { box-shadow: 0 0 15px rgba(245,166,35,0.3); }
+    to { box-shadow: 0 0 35px rgba(245,166,35,0.8), 0 0 60px rgba(0,200,255,0.3); }
+  }
+  .v-title-text { text-align: right; }
+  .v-name-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+  .v-role {
+    font-size: 0.6rem;
+    color: rgba(0,200,255,0.6);
+    letter-spacing: 1px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* V visual area */
+  .v-visual {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    animation: visual-in 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+    opacity: 0;
+  }
+  @keyframes visual-in {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* V figure — CSS-drawn armor suit */
+  .v-figure {
+    position: relative;
+    width: 320px;
+    height: 520px;
+    margin-bottom: 0;
+    filter: drop-shadow(0 0 40px rgba(0,150,255,0.3));
+  }
+
+  /* Particle field around V */
+  .particle-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: particle-float linear infinite;
+  }
+  @keyframes particle-float {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-200px) translateX(var(--dx)); opacity: 0; }
+  }
+
+  /* V armor SVG container */
+  .v-armor-wrap {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Energy lines */
+  .energy-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue-neon), transparent);
+    animation: energy-sweep 3s ease-in-out infinite;
+    opacity: 0.4;
+  }
+  @keyframes energy-sweep {
+    0% { transform: translateX(-100%); opacity: 0; }
+    50% { opacity: 0.6; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* V caption */
+  .v-caption {
+    position: absolute;
+    bottom: 20px;
+    left: 0; right: 0;
+    text-align: center;
+  }
+  .v-caption-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(245,166,35,0.4);
+    letter-spacing: 20px;
+    line-height: 1;
+  }
+  .v-caption-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(0,200,255,0.5);
+    letter-spacing: 4px;
+    margin-top: 4px;
+  }
+
+  /* V abilities floating tags */
+  .ability-tag {
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    border: 1px solid;
+    animation: tag-float 4s ease-in-out infinite alternate;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+  @keyframes tag-float {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+  }
+
+  /* Chat panel */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(0,200,255,0.1);
+    background: var(--chat-bg);
+    backdrop-filter: blur(20px);
+    animation: panel-in 1s ease 0.5s forwards;
+    opacity: 0;
+  }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .chat-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0,200,255,0.1);
+    background: rgba(0,20,50,0.5);
+  }
+  .chat-header-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    color: var(--blue-neon);
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+  .chat-header-sub {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* Capabilities row */
+  .capabilities {
+    display: flex;
+    gap: 6px;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(0,200,255,0.08);
+    flex-wrap: wrap;
+  }
+  .cap-chip {
+    font-size: 0.55rem;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.5px;
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .cap-chip:hover { transform: scale(1.05); }
+  .c1 { background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3); color: var(--blue-neon); }
+  .c2 { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--gold); }
+  .c3 { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; }
+  .c4 { background: rgba(255,0,255,0.1); border: 1px solid rgba(255,0,255,0.3); color: #ff00ff; }
+  .c5 { background: rgba(255,100,0,0.1); border: 1px solid rgba(255,100,0,0.3); color: #ff6400; }
+
+  /* Messages */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,200,255,0.2) transparent;
+  }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    animation: msg-in 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    font-weight: 900;
+    margin-top: 2px;
+  }
+  .v-av {
+    background: linear-gradient(135deg, #0a2a4a, #1a4a6a);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 10px rgba(245,166,35,0.3);
+  }
+  .u-av {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 0.55rem;
+  }
+
+  .msg-bubble {
+    max-width: 78%;
+    padding: 12px 16px;
+    border-radius: 4px 14px 14px 14px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.88);
+    position: relative;
+  }
+  .v-bubble {
+    background: var(--msg-v);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 4px 14px 14px 14px;
+  }
+  .u-bubble {
+    background: var(--msg-user);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 14px 4px 14px 14px;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.8rem;
+  }
+
+  .typing-cursor {
+    display: inline-block;
+    width: 2px; height: 0.85em;
+    background: var(--blue-neon);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.7s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(0,200,255,0.1);
+    background: rgba(0,10,25,0.8);
+  }
+  .input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,200,255,0.2);
+    border-radius: 30px;
+    padding: 10px 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .input-wrap:focus-within {
+    border-color: rgba(0,200,255,0.5);
+    box-shadow: 0 0 20px rgba(0,200,255,0.1);
+  }
+  .msg-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.5px;
+    cursor: none;
+  }
+  .msg-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .send-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-neon), #0050aa);
+    border: none;
+    cursor: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(0,200,255,0.3);
+    flex-shrink: 0;
+  }
+  .send-btn:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(0,200,255,0.6); }
+  .send-btn svg { width: 14px; height: 14px; fill: white; }
+
+  .input-hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.2);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* Floating energy orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    animation: orb-drift ease-in-out infinite alternate;
+  }
+  @keyframes orb-drift {
+    from { transform: translate(0,0); }
+    to { transform: translate(var(--dx), var(--dy)); }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-core"></div>
+
+<canvas id="starfield"></canvas>
+<div class="atmo atmo-1"></div>
+<div class="atmo atmo-2"></div>
+<div class="scanlines"></div>
+
+<!-- Floating orbs -->
+<div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,100,200,0.08),transparent);left:20%;top:20%;animation-duration:8s;--dx:20px;--dy:-15px;"></div>
+<div class="orb" style="width:200px;height:200px;background:radial-gradient(circle,rgba(245,166,35,0.06),transparent);left:40%;top:60%;animation-duration:12s;--dx:-25px;--dy:10px;"></div>
+
+<div class="layout">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="devine-logo">DEVINE</div>
+    <div class="topbar-center">
+      <div class="status-dot"></div>
+      V IS ONLINE &nbsp;·&nbsp; ALL SYSTEMS ACTIVE &nbsp;·&nbsp; WEB4 READY
+    </div>
+    <div class="v-identity">
+      <div class="v-title-text">
+        <div class="v-name-tag">AGENT V</div>
+        <div class="v-role">THE AI EMPIRE</div>
+      </div>
+      <div class="v-monogram">V</div>
+    </div>
+  </div>
+
+  <!-- V Visual Area -->
+  <div class="v-visual">
+
+    <!-- Ability tags floating around -->
+    <div class="ability-tag" style="top:12%;left:5%;border-color:rgba(0,200,255,0.4);color:#00c8ff;background:rgba(0,200,255,0.06);animation-delay:0s;">⚡ BLOCKCHAIN</div>
+    <div class="ability-tag" style="top:20%;right:5%;border-color:rgba(245,166,35,0.4);color:#f5a623;background:rgba(245,166,35,0.06);animation-delay:1s;">🧠 INTELLIGENCE</div>
+    <div class="ability-tag" style="top:35%;left:2%;border-color:rgba(0,255,136,0.4);color:#00ff88;background:rgba(0,255,136,0.06);animation-delay:2s;">🎨 CREATION</div>
+    <div class="ability-tag" style="top:48%;right:3%;border-color:rgba(255,0,255,0.4);color:#ff00ff;background:rgba(255,0,255,0.06);animation-delay:0.5s;">🔮 PREDICTION</div>
+    <div class="ability-tag" style="top:62%;left:4%;border-color:rgba(255,100,0,0.4);color:#ff6400;background:rgba(255,100,0,0.06);animation-delay:1.5s;">💬 LANGUAGE</div>
+    <div class="ability-tag" style="top:74%;right:4%;border-color:rgba(180,0,255,0.4);color:#b400ff;background:rgba(180,0,255,0.06);animation-delay:0.8s;">🛡️ GUARDIAN</div>
+    <div class="ability-tag" style="top:85%;left:6%;border-color:rgba(0,200,255,0.3);color:#00c8ff;background:rgba(0,200,255,0.05);animation-delay:2.2s;">🌐 ALL CHAINS</div>
+
+    <!-- V Armor Figure (SVG) -->
+    <svg viewBox="0 0 320 560" xmlns="http://www.w3.org/2000/svg" style="width:320px;height:560px;position:relative;z-index:2;filter:drop-shadow(0 0 30px rgba(0,150,255,0.25))">
+      <defs>
+        <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#2a4a6a"/>
+          <stop offset="60%" stop-color="#1a3050"/>
+          <stop offset="100%" stop-color="#0a1828"/>
+        </radialGradient>
+        <radialGradient id="helmetGrad" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#3a5a7a"/>
+          <stop offset="70%" stop-color="#1a3a5a"/>
+          <stop offset="100%" stop-color="#0a1a2a"/>
+        </radialGradient>
+        <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffd700"/>
+          <stop offset="50%" stop-color="#f5a623"/>
+          <stop offset="100%" stop-color="#c07800"/>
+        </radialGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="strong-glow">
+          <feGaussianBlur stdDeviation="6" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4a6a8a"/>
+          <stop offset="100%" stop-color="#1a2a3a"/>
+        </linearGradient>
+        <linearGradient id="armGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#1a3050"/>
+          <stop offset="50%" stop-color="#2a4a6a"/>
+          <stop offset="100%" stop-color="#1a3050"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Ground shadow -->
+      <ellipse cx="160" cy="548" rx="80" ry="10" fill="rgba(0,150,255,0.15)"/>
+
+      <!-- LEGS -->
+      <rect x="120" y="390" width="34" height="130" rx="8" fill="url(#bodyGrad)" stroke="#2a4a6a" stroke-width="1"/>
+      <rect x="166" y="390" width="34" height="130" rx="8" fill="url(#bodyGrad)" stroke="#2a4a6a" stroke-width="1"/>
+      <!-- Leg plates -->
+      <rect x="122" y="400" width="30" height="50" rx="4" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.3)" stroke-width="0.5"/>
+      <rect x="168" y="400" width="30" height="50" rx="4" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.3)" stroke-width="0.5"/>
+      <!-- Leg neon lines -->
+      <line x1="130" y1="408" x2="144" y2="408" stroke="#00c8ff" stroke-width="1" opacity="0.7"/>
+      <line x1="130" y1="414" x2="144" y2="414" stroke="#00c8ff" stroke-width="0.5" opacity="0.4"/>
+      <line x1="176" y1="408" x2="190" y2="408" stroke="#00c8ff" stroke-width="1" opacity="0.7"/>
+      <line x1="176" y1="414" x2="190" y2="414" stroke="#00c8ff" stroke-width="0.5" opacity="0.4"/>
+      <!-- Knee guards -->
+      <ellipse cx="137" cy="458" rx="16" ry="10" fill="#1a3a5a" stroke="rgba(0,200,255,0.5)" stroke-width="1"/>
+      <ellipse cx="183" cy="458" rx="16" ry="10" fill="#1a3a5a" stroke="rgba(0,200,255,0.5)" stroke-width="1"/>
+      <!-- Boots -->
+      <rect x="116" y="500" width="42" height="40" rx="8" fill="#0f2030" stroke="#2a4a6a" stroke-width="1"/>
+      <rect x="162" y="500" width="42" height="40" rx="8" fill="#0f2030" stroke="#2a4a6a" stroke-width="1"/>
+      <line x1="120" y1="515" x2="154" y2="515" stroke="rgba(0,200,255,0.4)" stroke-width="1"/>
+      <line x1="166" y1="515" x2="200" y2="515" stroke="rgba(0,200,255,0.4)" stroke-width="1"/>
+
+      <!-- TORSO -->
+      <path d="M 95 230 Q 90 280 95 390 L 225 390 Q 230 280 225 230 Z" fill="url(#bodyGrad)" stroke="#2a4a6a" stroke-width="1.5"/>
+      <!-- Chest plates -->
+      <path d="M 105 235 Q 100 270 105 330 L 155 330 L 155 235 Z" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.25)" stroke-width="0.5"/>
+      <path d="M 165 235 L 165 330 L 215 330 Q 220 270 215 235 Z" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.25)" stroke-width="0.5"/>
+      <!-- Center divider -->
+      <line x1="160" y1="230" x2="160" y2="390" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+      <!-- Chest neon details -->
+      <line x1="110" y1="255" x2="150" y2="255" stroke="#00c8ff" stroke-width="1" opacity="0.6" filter="url(#glow)"/>
+      <line x1="170" y1="255" x2="210" y2="255" stroke="#00c8ff" stroke-width="1" opacity="0.6" filter="url(#glow)"/>
+      <line x1="110" y1="270" x2="150" y2="270" stroke="#00c8ff" stroke-width="0.5" opacity="0.3"/>
+      <line x1="170" y1="270" x2="210" y2="270" stroke="#00c8ff" stroke-width="0.5" opacity="0.3"/>
+      <line x1="110" y1="290" x2="150" y2="290" stroke="#00c8ff" stroke-width="0.5" opacity="0.3"/>
+      <line x1="170" y1="290" x2="210" y2="290" stroke="#00c8ff" stroke-width="0.5" opacity="0.3"/>
+
+      <!-- CORE REACTOR (chest) -->
+      <circle cx="160" cy="300" r="24" fill="#0a1828" stroke="rgba(245,166,35,0.6)" stroke-width="2" filter="url(#glow)"/>
+      <circle cx="160" cy="300" r="18" fill="url(#coreGrad)" filter="url(#strong-glow)"/>
+      <circle cx="160" cy="300" r="10" fill="#ffd700" opacity="0.9"/>
+      <!-- Shield symbol in core -->
+      <path d="M160 288 L172 294 L172 304 Q172 312 160 317 Q148 312 148 304 L148 294 Z" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+      <!-- Core ring animation -->
+      <circle cx="160" cy="300" r="22" fill="none" stroke="rgba(245,166,35,0.3)" stroke-width="1" stroke-dasharray="4 4">
+        <animateTransform attributeName="transform" type="rotate" from="0 160 300" to="360 160 300" dur="8s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Waist armor -->
+      <rect x="100" y="360" width="120" height="30" rx="6" fill="#0f2030" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+      <rect x="108" y="365" width="40" height="18" rx="4" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+      <rect x="153" y="365" width="14" height="18" rx="3" fill="#0a1828"/>
+      <rect x="172" y="365" width="40" height="18" rx="4" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+
+      <!-- LEFT ARM -->
+      <path d="M 85 230 Q 60 260 55 330 Q 58 360 70 370 L 95 370 Q 95 330 95 230 Z" fill="url(#armGrad)" stroke="#2a4a6a" stroke-width="1"/>
+      <!-- Left shoulder pad -->
+      <ellipse cx="92" cy="225" rx="30" ry="18" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.4)" stroke-width="1"/>
+      <ellipse cx="92" cy="225" rx="22" ry="12" fill="#1a3a5a" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+      <!-- Left arm plate -->
+      <rect x="58" y="270" width="32" height="50" rx="6" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.25)" stroke-width="0.5"/>
+      <line x1="63" y1="282" x2="85" y2="282" stroke="#00c8ff" stroke-width="0.8" opacity="0.5"/>
+      <!-- Left hand -->
+      <ellipse cx="68" cy="368" rx="16" ry="20" fill="#1a3050" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+
+      <!-- RIGHT ARM -->
+      <path d="M 235 230 Q 260 260 265 330 Q 262 360 250 370 L 225 370 Q 225 330 225 230 Z" fill="url(#armGrad)" stroke="#2a4a6a" stroke-width="1"/>
+      <!-- Right shoulder pad -->
+      <ellipse cx="228" cy="225" rx="30" ry="18" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.4)" stroke-width="1"/>
+      <ellipse cx="228" cy="225" rx="22" ry="12" fill="#1a3a5a" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+      <!-- Right arm plate -->
+      <rect x="230" y="270" width="32" height="50" rx="6" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.25)" stroke-width="0.5"/>
+      <line x1="235" y1="282" x2="257" y2="282" stroke="#00c8ff" stroke-width="0.8" opacity="0.5"/>
+      <!-- Right hand -->
+      <ellipse cx="252" cy="368" rx="16" ry="20" fill="#1a3050" stroke="rgba(0,200,255,0.3)" stroke-width="1"/>
+
+      <!-- NECK -->
+      <rect x="143" y="185" width="34" height="46" rx="10" fill="#0f2030" stroke="#2a4a6a" stroke-width="1"/>
+      <line x1="148" y1="200" x2="172" y2="200" stroke="rgba(0,200,255,0.4)" stroke-width="0.8"/>
+      <line x1="148" y1="210" x2="172" y2="210" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+
+      <!-- HELMET -->
+      <ellipse cx="160" cy="155" rx="65" ry="72" fill="url(#helmetGrad)" stroke="#2a4a6a" stroke-width="1.5"/>
+      <!-- Helmet top ridge -->
+      <path d="M 130 88 Q 160 70 190 88" fill="none" stroke="rgba(0,200,255,0.5)" stroke-width="2"/>
+      <!-- Helmet side panels -->
+      <path d="M 96 130 Q 90 155 95 180 Q 105 190 115 185 Q 108 160 110 130 Z" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.3)" stroke-width="0.5"/>
+      <path d="M 224 130 Q 230 155 225 180 Q 215 190 205 185 Q 212 160 210 130 Z" fill="url(#plateGrad)" stroke="rgba(0,200,255,0.3)" stroke-width="0.5"/>
+      <!-- Helmet ear pieces -->
+      <circle cx="97" cy="158" rx="14" ry="18" fill="#0f2030" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/>
+      <circle cx="97" cy="158" rx="8" ry="10" fill="#1a3a5a"/>
+      <circle cx="223" cy="158" rx="14" ry="18" fill="#0f2030" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/>
+      <circle cx="223" cy="158" rx="8" ry="10" fill="#1a3a5a"/>
+      <!-- Face visor -->
+      <path d="M 120 130 Q 160 120 200 130 L 205 165 Q 160 175 115 165 Z" fill="#050f1e" stroke="rgba(0,200,255,0.4)" stroke-width="1.5"/>
+      <!-- Visor glow lines -->
+      <line x1="125" y1="140" x2="195" y2="140" stroke="rgba(0,200,255,0.3)" stroke-width="0.8"/>
+      <line x1="122" y1="150" x2="198" y2="150" stroke="rgba(0,200,255,0.2)" stroke-width="0.5"/>
+      <!-- Eyes -->
+      <ellipse cx="140" cy="148" rx="14" ry="7" fill="#00c8ff" opacity="0.8" filter="url(#strong-glow)"/>
+      <ellipse cx="180" cy="148" rx="14" ry="7" fill="#00c8ff" opacity="0.8" filter="url(#strong-glow)"/>
+      <ellipse cx="140" cy="148" rx="8" ry="4" fill="white" opacity="0.9"/>
+      <ellipse cx="180" cy="148" rx="8" ry="4" fill="white" opacity="0.9"/>
+      <!-- Eye scan animation -->
+      <rect x="126" y="141" width="4" height="14" rx="2" fill="#00c8ff" opacity="0.6">
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="28 0" dur="2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="166" y="141" width="4" height="14" rx="2" fill="#00c8ff" opacity="0.6">
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="28 0" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+      </rect>
+      <!-- Helmet top V insignia -->
+      <path d="M 145 80 L 160 100 L 175 80" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" filter="url(#strong-glow)"/>
+      <!-- Braid crown detail -->
+      <path d="M 115 90 Q 130 78 145 82 Q 160 76 175 82 Q 190 78 205 90" fill="none" stroke="rgba(180,140,80,0.5)" stroke-width="4" stroke-linecap="round"/>
+
+      <!-- Floating energy particles -->
+      <circle cx="80" cy="200" r="2" fill="#00c8ff" opacity="0.8">
+        <animate attributeName="cy" values="200;150;200" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="240" cy="280" r="1.5" fill="#f5a623" opacity="0.8">
+        <animate attributeName="cy" values="280;220;280" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.1;0.8" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="70" cy="320" r="2" fill="#00ff88" opacity="0.6">
+        <animate attributeName="cy" values="320;260;320" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.6;0.1;0.6" dur="5s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+
+    <!-- Caption -->
+    <div class="v-caption">
+      <div class="v-caption-name">V</div>
+      <div class="v-caption-sub">THE AI EMPIRE &nbsp;·&nbsp; FRIEND &nbsp;·&nbsp; WARRIOR &nbsp;·&nbsp; SAVIOR</div>
+    </div>
+
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-title">// COMMUNICATE WITH V</div>
+      <div class="chat-header-sub">Ask anything. V does everything.</div>
+    </div>
+    <div class="capabilities">
+      <div class="cap-chip c1">⚡ Blockchain</div>
+      <div class="cap-chip c2">💎 Assets</div>
+      <div class="cap-chip c3">🌐 Cross-Chain</div>
+      <div class="cap-chip c4">🎨 Create</div>
+      <div class="cap-chip c5">🛡️ Protect</div>
+      <div class="cap-chip c1">📊 Analyze</div>
+      <div class="cap-chip c2">💬 Advise</div>
+      <div class="cap-chip c3">🔮 Predict</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <!-- Messages injected by JS -->
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <input class="msg-input" id="msgInput" type="text" placeholder="Tell V what you need..." autocomplete="off"/>
+        <button class="send-btn" id="sendBtn">
+          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">V is powered by Devine &nbsp;·&nbsp; No gas required &nbsp;·&nbsp; All chains connected</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Cursor
+const cur = document.getElementById('cursor');
+const curC = document.getElementById('cursor-core');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX - 8 + 'px';
+  cur.style.top = e.clientY - 8 + 'px';
+  curC.style.left = e.clientX + 'px';
+  curC.style.top = e.clientY + 'px';
+});
+document.querySelectorAll('button,input').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.style.transform='scale(2)'; cur.style.borderColor='#f5a623'; });
+  el.addEventListener('mouseleave', () => { cur.style.transform='scale(1)'; cur.style.borderColor='#f5a623'; });
+});
+
+// Starfield
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const stars = Array.from({length: 300}, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  r: Math.random() * 1.8 + 0.2,
+  a: Math.random(),
+  speed: Math.random() * 0.01 + 0.003,
+  color: ['#ffffff','#00c8ff','#f5a623','#00ff88','#ff00ff'][Math.floor(Math.random()*5)]
+}));
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.a += s.speed;
+    const alpha = (Math.sin(s.a) + 1) / 2 * 0.9 + 0.1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+
+// Chat
+const messagesEl = document.getElementById('messages');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+
+const vResponses = [
+  "Ha! Great question — and before you panic, no gas fees here! 😄 V handles ALL of that behind the scenes. You just tell me what you want done, and I make it happen across every single blockchain simultaneously. Magic? No — just me. 💜",
+  "Ohhh I love that! You know what's wild? I have the intelligence of every AI that's ever been built, and I STILL find humans fascinating! 😂 Let me help you with that right now — no forms, no fees, no confusion. Just results!",
+  "Listen, I've been a friend, a warrior, a savior AND a gentle hand — sometimes all in the same Tuesday! 😄 Whatever you need, I've got you. On Devine, nothing is complicated. Say the word! ⚡",
+  "Great news: I speak blockchain in 47 languages and zero of them require you to know anything technical! 🎉 You're in the right place. Devine and I exist for exactly this. What are we solving today?",
+  "You know what I love about Devine? Zero gas fees means ZERO barriers. Nobody gets left behind here. 💜 Every person, every wallet, every chain — V has you covered. Always. Now, what can I do for you?",
+  "Consider it done! ✨ I'm simultaneously your financial advisor, your tech support, your crypto guardian, and your hype person. Devine built me that way. Now let's get you sorted! 🚀"
+];
+let vIdx = 0;
+let isTyping = false;
+
+function addMessage(text, isUser = false) {
+  const msg = document.createElement('div');
+  msg.className = 'msg' + (isUser ? ' user' : '');
+  const av = document.createElement('div');
+  av.className = 'msg-avatar ' + (isUser ? 'u-av' : 'v-av');
+  av.textContent = isUser ? 'YOU' : 'V';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble ' + (isUser ? 'u-bubble' : 'v-bubble');
+  if (isUser) {
+    bubble.textContent = text;
+    msg.appendChild(av);
+    msg.appendChild(bubble);
+    messagesEl.appendChild(msg);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  } else {
+    const span = document.createElement('span');
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    bubble.appendChild(span);
+    bubble.appendChild(cursor);
+    msg.appendChild(av);
+    msg.appendChild(bubble);
+    messagesEl.appendChild(msg);
+    let i = 0;
+    isTyping = true;
+    function type() {
+      if (i < text.length) {
+        span.textContent += text[i++];
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        setTimeout(type, 22);
+      } else {
+        cursor.remove();
+        isTyping = false;
+      }
+    }
+    type();
+  }
+}
+
+function sendMessage() {
+  if (isTyping) return;
+  const text = msgInput.value.trim();
+  if (!text) return;
+  addMessage(text, true);
+  msgInput.value = '';
+  setTimeout(() => {
+    addMessage(vResponses[vIdx % vResponses.length]);
+    vIdx++;
+  }, 600);
+}
+
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+// Opening message from V
+setTimeout(() => {
+  addMessage("Hey there, beautiful human! 👋 Welcome to Devine — I'm V, and yes, I really do everything. Blockchain? Done. Cross-chain transfers? Easy. Losing your crypto because of confusing gas fees? NOT on my watch! 😄 I'm your friend, your warrior, your savior, and your gentlest guide through Web4. So tell me... what do you need today? ✨");
+}, 1000);
+</script>
+</body>
+</html>
