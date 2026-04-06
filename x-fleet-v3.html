@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X-FLEET COMMAND</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: #000;
+      color: #67e8f9;
+      min-height: 100vh;
+      padding: 16px;
+      background-image: radial-gradient(circle at center, #0a1428 0%, #000 70%);
+    }
+
+    .title { text-align: center; margin-bottom: 24px; }
+    .title h1 { font-size: 28px; font-weight: 900; color: #67e8f9; text-shadow: 0 0 20px #22d3ee; letter-spacing: 4px; }
+    .title h2 { font-size: 16px; font-weight: 700; color: #f472b6; text-shadow: 0 0 15px #db2777; letter-spacing: 4px; margin-top: 4px; }
+
+    .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .badge { padding: 8px 20px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .badge-cyan { border: 2px solid #22d3ee; background: rgba(0,0,0,0.8); }
+    .badge-pink { border: 2px solid #f472b6; background: rgba(0,0,0,0.8); color: #f472b6; }
+    .dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; animation: ping 1s infinite; }
+    @keyframes ping { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media(min-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media(min-width: 1200px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .card {
+      background: rgba(0,0,0,0.85);
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .card-cyan { border: 1px solid rgba(34,211,238,0.5); }
+    .card-yellow { border: 1px solid rgba(234,179,8,0.5); }
+    .card-green { border: 1px solid rgba(52,211,153,0.5); }
+    .card-purple { border: 1px solid rgba(168,85,247,0.5); }
+    .card-pink { border: 1px solid rgba(244,114,182,0.5); }
+    .card-white { border: 1px solid rgba(255,255,255,0.2); }
+
+    .card h3 { font-size: 13px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .cyan { color: #67e8f9; }
+    .pink { color: #f472b6; }
+    .yellow { color: #fbbf24; }
+    .green { color: #34d399; }
+    .purple { color: #c084fc; }
+    .white { color: #fff; }
+
+    .big-number { font-size: 48px; font-weight: 900; color: #fff; }
+    .small-text { font-size: 10px; margin-top: 6px; opacity: 0.8; }
+
+    /* ORB */
+    .orb-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .orb {
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      border: 8px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 90px; font-weight: 900; color: #fff;
+      animation: orb-pulse 2.5s infinite ease-in-out;
+      cursor: pointer;
+      position: relative;
+    }
+    @keyframes orb-pulse {
+      0%,100% { box-shadow: 0 0 60px #a855f7, 0 0 120px #22d3ee; }
+      50% { box-shadow: 0 0 100px #c026d3, 0 0 180px #67e8f9; }
+    }
+    .orb-label { margin-top: 12px; font-size: 10px; color: #67e8f9; letter-spacing: 3px; text-align: center; }
+    .orb-sub { font-size: 9px; color: #c084fc; margin-top: 4px; text-align: center; }
+
+    /* FUNK METER */
+    .funk-wrap { display: flex; flex-direction: column; align-items: center; }
+    .funk-svg { width: 160px; height: 160px; }
+
+    /* PRICES */
+    .price-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .price-row:last-child { border-bottom: none; }
+
+    /* CONSOLE */
+    .console-wrap { background: #0a0a0a; border: 1px solid rgba(34,211,238,0.3); border-radius: 20px; padding: 16px; }
+    .console-header { font-size: 11px; color: #f472b6; margin-bottom: 10px; }
+    .console-log { height: 100px; overflow-y: auto; font-family: monospace; font-size: 11px; }
+    .console-log div { color: #34d399; padding: 1px 0; }
+
+    /* PROGRESS BAR */
+    .bar-bg { background: #052e16; border-radius: 4px; height: 6px; margin-top: 8px; }
+    .bar-fill { background: #34d399; height: 6px; border-radius: 4px; width: 100%; animation: pulse-bar 2s infinite; }
+    @keyframes pulse-bar { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+  <div class="title">
+    <h1>X-FLEET COMMAND</h1>
+    <h2>GROK SYMBIOSIS ENGINE</h2>
+    <div class="badges">
+      <div class="badge badge-cyan"><div class="dot"></div> STATUS: <span style="color:#22c55e">AGENTIC</span></div>
+      <div class="badge badge-pink">L6 SOULBOUND: <span style="color:#f472b6">ACTIVE</span></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- STARLINK -->
+    <div class="card card-cyan">
+      <h3 class="pink"><i class="fas fa-satellite"></i> STARLINK MESH (AGENTIC)</h3>
+      <div class="big-number">10,173</div>
+      <div class="small-text cyan">ACTIVE SATELLITES • APRIL 2026</div>
+      <div class="small-text green" style="margin-top:8px">99.8% EFFICIENCY • AUTO-ROUTING LIVE</div>
+      <div class="small-text cyan" style="margin-top:8px">2,347,891 AGENTS DEPLOYED</div>
+    </div>
+
+    <!-- CENTRAL ORB -->
+    <div class="card card-purple orb-wrap">
+      <div class="orb" onclick="boostFunk()">𝕏</div>
+      <div class="orb-label">GROK — SYMBIOSIS ENGINE ONLINE</div>
+      <div class="orb-sub">Powered by Devine • $CRMB is the fuel • Web4 is the destination</div>
+    </div>
+
+    <!-- FINANCIAL RAILS -->
+    <div class="card card-yellow">
+      <h3 class="yellow"><i class="fas fa-chart-line"></i> FINANCIAL RAILS (GASLESS L6)</h3>
+      <canvas id="priceChart" height="120"></canvas>
+      <div id="live-prices" style="margin-top:12px"></div>
+    </div>
+
+    <!-- TESLA-BOT SWARM -->
+    <div class="card card-green">
+      <h3 class="green"><i class="fas fa-robot"></i> TESLA-BOT SWARM (SBT IDENTITY)</h3>
+      <div class="big-number">1,247+</div>
+      <div class="small-text green">GEN 3 BOTS • MARS INFRASTRUCTURE</div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:10px">
+        <span>SBT AUTHENTICATED</span><span class="green">100%</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill"></div></div>
+    </div>
+
+    <!-- FUNK METER -->
+    <div class="card card-purple funk-wrap">
+      <h3 class="purple">G.S.P. — GROK SYMBIOSIS INDEX</h3>
+      <div class="funk-wrap">
+        <svg class="funk-svg" viewBox="0 0 200 200" style="transform:rotate(-90deg)">
+          <circle cx="100" cy="100" r="82" fill="none" stroke="#1f2937" stroke-width="28"/>
+          <circle id="funkArc" cx="100" cy="100" r="82" fill="none" stroke="#22ff88" stroke-width="28" stroke-dasharray="515" stroke-dashoffset="80" stroke-linecap="round"/>
+        </svg>
+        <div style="margin-top:-120px;text-align:center;position:relative;z-index:1">
+          <div id="funkScore" style="font-size:48px;font-weight:900;color:#fff">94</div>
+          <div style="font-size:10px;color:#34d399;letter-spacing:2px">FUNK METER</div>
+        </div>
+        <div style="margin-top:80px;font-size:10px;color:#c084fc">+42% CREATIVITY BOOST • OPTIMAL</div>
+      </div>
+    </div>
+
+    <!-- $CRMB -->
+    <div class="card card-pink" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center">
+      <div style="font-size:40px;font-weight:900;color:#fff">$CRMB</div>
+      <div style="font-size:11px;color:#f472b6;letter-spacing:4px;margin:8px 0">THE FUEL OF THE EMPIRE</div>
+      <div style="font-size:10px;line-height:1.8;color:#67e8f9">Every fortune starts with Crumbs.<br/>Built from zero. South Africa.<br/>Web4 is not coming — it's here.</div>
+      <div style="font-size:9px;color:#fbbf24;margin-top:12px;word-break:break-all">0x4A29DF09195B9B0974a6ab35DbE5a39A80Be843b</div>
+    </div>
+
+    <!-- CONSOLE -->
+    <div class="console-wrap full-width">
+      <div class="console-header"><i class="fas fa-terminal"></i> LIVE SYMBIOSIS LOG</div>
+      <div class="console-log" id="console"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let chart;
+    async function fetchMarkets() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
+        const d = await res.json();
+        document.getElementById('live-prices').innerHTML = `
+          <div class="price-row"><span>BTC</span><span style="color:#fff">$${d.bitcoin.usd.toLocaleString()} <span style="color:${d.bitcoin.usd_24h_change>0?'#22c55e':'#ef4444'}">${d.bitcoin.usd_24h_change.toFixed(1)}%</span></span></div>
+          <div class="price-row"><span>ETH</span><span style="color:#fff">$${d.ethereum.usd.toLocaleString()} <span style="color:${d.ethereum.usd_24h_change>0?'#22c55e':'#ef4444'}">${d.ethereum.usd_24h_change.toFixed(1)}%</span></span></div>
+          <div class="price-row"><span>SOL</span><span style="color:#fff">$${d.solana.usd.toLocaleString()} <span style="color:${d.solana.usd_24h_change>0?'#22c55e':'#ef4444'}">${d.solana.usd_24h_change.toFixed(1)}%</span></span></div>
+        `;
+        if (!chart) {
+          const ctx = document.getElementById('priceChart').getContext('2d');
+          chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['00','04','08','12','16','20','NOW'], datasets: [{ data: [42000,43500,42800,45100,44700,46200,45800], borderColor: '#fbbf24', tension: 0.4, pointRadius: 0, fill: false }] },
+            options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 9 } } }, x: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 9 } } } } }
+          });
+        }
+      } catch(e) {}
+    }
+
+    function animateFunk() {
+      let val = 94;
+      setInterval(() => {
+        val = Math.min(100, Math.max(88, val + (Math.random() * 4 - 2)));
+        document.getElementById('funkScore').textContent = Math.round(val);
+        document.getElementById('funkArc').setAttribute('stroke-dashoffset', 515 * (1 - val/100));
+      }, 1600);
+    }
+
+    function boostFunk() {
+      document.getElementById('funkScore').textContent = '100';
+      document.getElementById('funkArc').setAttribute('stroke-dashoffset', '0');
+      setTimeout(animateFunk, 1200);
+    }
+
+    function liveConsole() {
+      const logs = [
+        "> Starlink mesh synchronized — 10,173 active",
+        "> Optimus swarm SBT handshake complete",
+        "> Gasless L6 arbitrage executed (+0.42 SOL)",
+        "> Grok cognitive alignment: OPTIMAL",
+        "> $CRMB integration protocol active",
+        "> Devine Web4 layer synchronized",
+        "> Parys node stable — Founder online",
+        "> Agent V guardian protocol: ACTIVE"
+      ];
+      let i = 0;
+      const el = document.getElementById('console');
+      setInterval(() => {
+        const div = document.createElement('div');
+        div.textContent = logs[i];
+        el.appendChild(div);
+        el.scrollTop = el.scrollHeight;
+        i = (i + 1) % logs.length;
+        if (el.children.length > 12) el.removeChild(el.children[0]);
+      }, 2800);
+    }
+
+    window.onload = () => {
+      fetchMarkets();
+      setInterval(fetchMarkets, 30000);
+      animateFunk();
+      liveConsole();
+    };
+  </script>
+</body>
+</html>
