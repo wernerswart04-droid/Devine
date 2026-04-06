@@ -1,713 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Devine — Web4 Powered by V</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&family=Space+Mono&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --neon-pink: #ff00ff;
-    --neon-cyan: #00ffff;
-    --neon-green: #00ff88;
-    --neon-gold: #ffd700;
-    --neon-orange: #ff6600;
-    --neon-purple: #bf00ff;
-    --neon-blue: #0066ff;
-    --dark: #020008;
-    --darker: #010005;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--darker);
-    font-family: 'Rajdhani', sans-serif;
-    overflow-x: hidden;
-    cursor: none;
-    min-height: 100vh;
-  }
-
-  /* Custom cursor */
-  .cursor {
-    width: 20px; height: 20px;
-    border: 2px solid var(--neon-cyan);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.1s ease;
-    mix-blend-mode: screen;
-  }
-  .cursor-dot {
-    width: 6px; height: 6px;
-    background: var(--neon-pink);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-  }
-
-  /* Stars background */
-  .stars {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    overflow: hidden;
-  }
-  .star {
-    position: absolute;
-    border-radius: 50%;
-    animation: twinkle linear infinite;
-  }
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.5); }
-  }
-
-  /* Nebula clouds */
-  .nebula {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.12;
-    z-index: 0;
-    animation: nebula-drift 20s ease-in-out infinite alternate;
-  }
-  @keyframes nebula-drift {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(30px, -20px) scale(1.1); }
-  }
-
-  /* Scanlines */
-  .scanlines {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,255,255,0.015) 2px,
-      rgba(0,255,255,0.015) 4px
-    );
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  /* Grid floor */
-  .grid-floor {
-    position: fixed;
-    bottom: 0; left: 0;
-    width: 100%; height: 50%;
-    background:
-      linear-gradient(rgba(0,255,255,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,255,255,0.06) 1px, transparent 1px);
-    background-size: 60px 60px;
-    transform: perspective(500px) rotateX(60deg);
-    transform-origin: bottom;
-    z-index: 0;
-    opacity: 0.5;
-  }
-
-  /* Main layout */
-  .page {
-    position: relative;
-    z-index: 2;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Header */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px 40px;
-    border-bottom: 1px solid rgba(0,255,255,0.1);
-    background: rgba(0,0,0,0.3);
-    backdrop-filter: blur(10px);
-    animation: slideDown 1s ease forwards;
-  }
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .logo-devine {
-    font-family: 'Orbitron', monospace;
-    font-size: 3rem;
-    font-weight: 900;
-    letter-spacing: 6px;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink), var(--neon-gold), var(--neon-green));
-    background-size: 300% 300%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: rainbow-shift 4s ease infinite, glow-pulse 2s ease-in-out infinite alternate;
-    text-shadow: none;
-    filter: drop-shadow(0 0 20px rgba(0,255,255,0.6));
-  }
-  @keyframes rainbow-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  @keyframes glow-pulse {
-    from { filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
-    to { filter: drop-shadow(0 0 30px rgba(255,0,255,0.8)); }
-  }
-
-  .header-nav {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-  }
-  .nav-link {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    color: rgba(0,255,255,0.6);
-    text-decoration: none;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    transition: all 0.3s;
-    position: relative;
-  }
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0;
-    width: 0; height: 1px;
-    background: var(--neon-pink);
-    transition: width 0.3s;
-  }
-  .nav-link:hover { color: var(--neon-pink); }
-  .nav-link:hover::after { width: 100%; }
-
-  /* V Logo badge */
-  .v-badge {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(191,0,255,0.4);
-    border-radius: 30px;
-    padding: 8px 18px;
-    animation: badge-glow 2s ease-in-out infinite alternate;
-  }
-  @keyframes badge-glow {
-    from { border-color: rgba(191,0,255,0.4); box-shadow: 0 0 10px rgba(191,0,255,0.2); }
-    to { border-color: rgba(191,0,255,0.9); box-shadow: 0 0 25px rgba(191,0,255,0.5); }
-  }
-  .v-logo {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.4rem;
-    font-weight: 900;
-    color: var(--neon-purple);
-    text-shadow: 0 0 15px var(--neon-purple);
-  }
-  .v-label {
-    font-size: 0.65rem;
-    color: rgba(191,0,255,0.8);
-    letter-spacing: 1px;
-  }
-
-  /* Hero section */
-  .hero {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 40px;
-    text-align: center;
-    position: relative;
-  }
-
-  .welcome-tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--neon-green);
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    animation: fadeIn 1s ease 0.5s forwards;
-    opacity: 0;
-  }
-  @keyframes fadeIn {
-    to { opacity: 1; }
-  }
-
-  .hero-title {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(3rem, 10vw, 8rem);
-    font-weight: 900;
-    letter-spacing: 10px;
-    line-height: 1;
-    margin-bottom: 10px;
-    animation: heroIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  @keyframes heroIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .hero-title span {
-    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-gold), var(--neon-green), var(--neon-purple));
-    background-size: 400%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: rainbow-shift 3s ease infinite;
-    filter: drop-shadow(0 0 40px rgba(0,255,255,0.5));
-  }
-
-  .hero-subtitle {
-    font-size: 1.3rem;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 3px;
-    margin-bottom: 60px;
-    font-weight: 300;
-    animation: fadeIn 1s ease 0.8s forwards;
-    opacity: 0;
-  }
-
-  /* V Agent Chat Box */
-  .v-agent-container {
-    width: 100%;
-    max-width: 680px;
-    margin: 0 auto 50px;
-    animation: fadeIn 1s ease 1s forwards;
-    opacity: 0;
-  }
-
-  .v-agent-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, rgba(191,0,255,0.2), rgba(0,255,255,0.1));
-    border: 1px solid rgba(191,0,255,0.5);
-    border-bottom: none;
-    border-radius: 16px 16px 0 0;
-  }
-
-  .v-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: 1.1rem;
-    color: white;
-    box-shadow: 0 0 20px rgba(191,0,255,0.6);
-    animation: avatar-pulse 2s ease-in-out infinite;
-  }
-  @keyframes avatar-pulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(191,0,255,0.6); }
-    50% { box-shadow: 0 0 40px rgba(191,0,255,1), 0 0 60px rgba(0,255,255,0.4); }
-  }
-
-  .v-status {
-    display: flex;
-    flex-direction: column;
-  }
-  .v-name {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.9rem;
-    color: var(--neon-purple);
-    font-weight: 700;
-  }
-  .v-online {
-    font-size: 0.65rem;
-    color: var(--neon-green);
-    letter-spacing: 1px;
-  }
-  .v-online::before {
-    content: '● ';
-    animation: blink 1s infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .v-chat-body {
-    background: rgba(0,0,0,0.6);
-    border: 1px solid rgba(191,0,255,0.3);
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    padding: 24px;
-    min-height: 120px;
-    backdrop-filter: blur(10px);
-  }
-
-  .v-message {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .v-bubble {
-    background: linear-gradient(135deg, rgba(191,0,255,0.15), rgba(0,255,255,0.1));
-    border: 1px solid rgba(191,0,255,0.3);
-    border-radius: 4px 16px 16px 16px;
-    padding: 16px 20px;
-    font-size: 1rem;
-    color: rgba(255,255,255,0.9);
-    line-height: 1.6;
-    flex: 1;
-    position: relative;
-  }
-
-  .typing-text {
-    display: inline;
-  }
-
-  .cursor-blink {
-    display: inline-block;
-    width: 2px;
-    height: 1em;
-    background: var(--neon-cyan);
-    margin-left: 2px;
-    vertical-align: text-bottom;
-    animation: blink 0.7s infinite;
-  }
-
-  /* CTA Buttons */
-  .cta-group {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-    animation: fadeIn 1s ease 1.5s forwards;
-    opacity: 0;
-  }
-
-  .btn-primary {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 3px;
-    padding: 16px 40px;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-    color: black;
-    border: none;
-    border-radius: 4px;
-    cursor: none;
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s;
-    box-shadow: 0 0 30px rgba(0,255,255,0.4);
-  }
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-    transform: rotate(45deg) translateX(-100%);
-    transition: transform 0.6s;
-  }
-  .btn-primary:hover::before { transform: rotate(45deg) translateX(100%); }
-  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(0,255,255,0.6); }
-
-  .btn-secondary {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 3px;
-    padding: 16px 40px;
-    background: transparent;
-    color: var(--neon-pink);
-    border: 1px solid var(--neon-pink);
-    border-radius: 4px;
-    cursor: none;
-    text-transform: uppercase;
-    transition: all 0.3s;
-    box-shadow: 0 0 20px rgba(255,0,255,0.2), inset 0 0 20px rgba(255,0,255,0.05);
-  }
-  .btn-secondary:hover {
-    background: rgba(255,0,255,0.1);
-    box-shadow: 0 0 40px rgba(255,0,255,0.5), inset 0 0 20px rgba(255,0,255,0.1);
-    transform: translateY(-3px);
-  }
-
-  /* Feature pills */
-  .features {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 30px 40px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    animation: fadeIn 1s ease 1.8s forwards;
-    opacity: 0;
-  }
-
-  .feature-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    border-radius: 30px;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    font-family: 'Space Mono', monospace;
-    border: 1px solid;
-    transition: all 0.3s;
-  }
-  .feature-pill:hover { transform: translateY(-3px); }
-
-  .pill-1 { border-color: rgba(0,255,255,0.4); color: var(--neon-cyan); background: rgba(0,255,255,0.05); }
-  .pill-2 { border-color: rgba(255,0,255,0.4); color: var(--neon-pink); background: rgba(255,0,255,0.05); }
-  .pill-3 { border-color: rgba(0,255,136,0.4); color: var(--neon-green); background: rgba(0,255,136,0.05); }
-  .pill-4 { border-color: rgba(255,215,0,0.4); color: var(--neon-gold); background: rgba(255,215,0,0.05); }
-  .pill-5 { border-color: rgba(191,0,255,0.4); color: var(--neon-purple); background: rgba(191,0,255,0.05); }
-  .pill-6 { border-color: rgba(255,102,0,0.4); color: var(--neon-orange); background: rgba(255,102,0,0.05); }
-
-  /* Floating V logos */
-  .floating-v {
-    position: fixed;
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    color: var(--neon-purple);
-    opacity: 0.08;
-    pointer-events: none;
-    z-index: 1;
-    animation: float-around linear infinite;
-  }
-  @keyframes float-around {
-    0% { transform: translateY(0) rotate(0deg); opacity: 0.08; }
-    50% { opacity: 0.15; }
-    100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-  }
-
-  /* Corner decorations */
-  .corner {
-    position: fixed;
-    width: 80px; height: 80px;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .corner-tl { top: 0; left: 0; border-top: 2px solid var(--neon-cyan); border-left: 2px solid var(--neon-cyan); }
-  .corner-tr { top: 0; right: 0; border-top: 2px solid var(--neon-pink); border-right: 2px solid var(--neon-pink); }
-  .corner-bl { bottom: 0; left: 0; border-bottom: 2px solid var(--neon-green); border-left: 2px solid var(--neon-green); }
-  .corner-br { bottom: 0; right: 0; border-bottom: 2px solid var(--neon-gold); border-right: 2px solid var(--neon-gold); }
-
-  /* Big V watermark */
-  .v-watermark {
-    position: fixed;
-    bottom: -100px; right: -60px;
-    font-family: 'Orbitron', monospace;
-    font-size: 40vw;
-    font-weight: 900;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(191,0,255,0.06);
-    z-index: 0;
-    pointer-events: none;
-    line-height: 1;
-  }
-
-  /* Particle line */
-  .data-line {
-    position: fixed;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent, var(--neon-cyan), transparent);
-    animation: data-travel linear infinite;
-    opacity: 0.4;
-    z-index: 1;
-  }
-  @keyframes data-travel {
-    0% { top: -100%; height: 100px; }
-    100% { top: 100%; height: 100px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devine • Web4 Soulbound Identity</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+    body { font-family: 'Orbitron', sans-serif; }
+    .chat-bubble-user { background: linear-gradient(135deg, #22d3ee, #a855f7); }
+    .chat-bubble-ai { background: #1f2937; }
+  </style>
 </head>
-<body>
+<body class="bg-black text-cyan-300 min-h-screen">
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-dot" id="cursorDot"></div>
-
-<!-- Background elements -->
-<div class="stars" id="stars"></div>
-<div class="v-watermark">V</div>
-<div class="scanlines"></div>
-<div class="grid-floor"></div>
-
-<!-- Corner decorations -->
-<div class="corner corner-tl"></div>
-<div class="corner corner-tr"></div>
-<div class="corner corner-bl"></div>
-<div class="corner corner-br"></div>
-
-<!-- Data lines -->
-<div class="data-line" style="left:15%; animation-duration:3s; animation-delay:0s;"></div>
-<div class="data-line" style="left:35%; animation-duration:5s; animation-delay:1s;"></div>
-<div class="data-line" style="left:65%; animation-duration:4s; animation-delay:2s;"></div>
-<div class="data-line" style="left:85%; animation-duration:3.5s; animation-delay:0.5s;"></div>
-
-<!-- Nebula clouds -->
-<div class="nebula" style="width:600px;height:600px;background:var(--neon-purple);top:-100px;left:-100px;"></div>
-<div class="nebula" style="width:500px;height:500px;background:var(--neon-cyan);bottom:-100px;right:-100px;animation-delay:5s;"></div>
-<div class="nebula" style="width:400px;height:400px;background:var(--neon-pink);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:10s;"></div>
-
-<div class="page">
-  <!-- Header -->
-  <header>
-    <div class="logo-devine">DEVINE</div>
-    <nav class="header-nav">
-      <a href="#" class="nav-link">Assets</a>
-      <a href="#" class="nav-link">Swap</a>
-      <a href="#" class="nav-link">Send</a>
-      <a href="#" class="nav-link">Explore</a>
-    </nav>
-    <div class="v-badge">
-      <div class="v-logo">V</div>
-      <div class="v-label">AI AGENT<br>ONLINE</div>
+  <div class="max-w-2xl mx-auto p-4">
+    <div class="text-center py-8">
+      <h1 class="text-5xl font-bold tracking-widest neon-cyan">DEVINE</h1>
+      <p class="text-xl text-pink-400 mt-2">Soulbound Identity • Web4</p>
     </div>
-  </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="welcome-tag">✦ Welcome to the Future of Web4 ✦</div>
-    <h1 class="hero-title"><span>DEVINE</span></h1>
-    <p class="hero-subtitle">Everything AI &nbsp;·&nbsp; One Page &nbsp;·&nbsp; Zero Gas &nbsp;·&nbsp; All Chains</p>
-
-    <!-- V Agent -->
-    <div class="v-agent-container">
-      <div class="v-agent-header">
-        <div class="v-avatar">V</div>
-        <div class="v-status">
-          <div class="v-name">Agent V</div>
-          <div class="v-online">Online &amp; Ready</div>
+    <!-- AI CHAT -->
+    <div class="bg-zinc-950 border border-cyan-500/30 rounded-3xl p-6 h-[520px] flex flex-col">
+      <div class="flex items-center gap-3 mb-6 border-b border-cyan-900 pb-4">
+        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-2xl flex items-center justify-center text-2xl">𝕏</div>
+        <div>
+          <p class="font-bold">Devine AI Companion</p>
+          <p class="text-xs text-green-400">● Soulbound • Always Yours</p>
         </div>
       </div>
-      <div class="v-chat-body">
-        <div class="v-message">
-          <div class="v-bubble">
-            <span class="typing-text" id="vMessage"></span><span class="cursor-blink" id="typeCursor"></span>
-          </div>
-        </div>
+
+      <!-- Messages -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+        <!-- Messages appear here -->
+      </div>
+
+      <!-- Input -->
+      <div class="flex gap-3">
+        <input id="user-input" 
+               type="text" 
+               placeholder="Ask me anything about your identity, Web4, or Devine..."
+               class="flex-1 bg-zinc-900 border border-cyan-500/50 rounded-2xl px-5 py-4 focus:outline-none focus:border-pink-500 text-white">
+        <button onclick="sendMessage()" 
+                class="bg-gradient-to-r from-cyan-400 to-purple-500 px-8 rounded-2xl font-bold">
+          Send
+        </button>
       </div>
     </div>
 
-    <!-- CTA Buttons -->
-    <div class="cta-group">
-      <button class="btn-primary" onclick="enterDivine()">✦ Enter Devine</button>
-      <button class="btn-secondary">Learn More</button>
+    <div class="text-center text-xs text-cyan-500/50 mt-6">
+      Devine v0.1 • Your identity. Your rules.
     </div>
-  </section>
-
-  <!-- Features -->
-  <div class="features">
-    <div class="feature-pill pill-1">⚡ Zero Gas Fees</div>
-    <div class="feature-pill pill-2">🔮 AI Powered</div>
-    <div class="feature-pill pill-3">🌐 All Blockchains</div>
-    <div class="feature-pill pill-4">💎 All Assets</div>
-    <div class="feature-pill pill-5">🤖 Agent V</div>
-    <div class="feature-pill pill-6">🚀 Web4 Ready</div>
   </div>
-</div>
 
-<script>
-  // Custom cursor
-  const cursor = document.getElementById('cursor');
-  const cursorDot = document.getElementById('cursorDot');
-  document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX - 10 + 'px';
-    cursor.style.top = e.clientY - 10 + 'px';
-    cursorDot.style.left = e.clientX + 'px';
-    cursorDot.style.top = e.clientY + 'px';
-  });
-  document.querySelectorAll('button, a').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2)');
-    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
-  });
+  <script>
+    const messagesContainer = document.getElementById('chat-messages');
 
-  // Stars
-  const starsEl = document.getElementById('stars');
-  const colors = ['#00ffff','#ff00ff','#00ff88','#ffd700','#bf00ff','#ff6600','#ffffff','#0066ff'];
-  for (let i = 0; i < 200; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 3 + 1;
-    s.style.cssText = `
-      width:${size}px; height:${size}px;
-      left:${Math.random()*100}%;
-      top:${Math.random()*100}%;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      animation-duration:${Math.random()*4+2}s;
-      animation-delay:${Math.random()*5}s;
-      box-shadow: 0 0 ${size*2}px currentColor;
-    `;
-    starsEl.appendChild(s);
-  }
-
-  // Floating V logos
-  function spawnV() {
-    const v = document.createElement('div');
-    v.className = 'floating-v';
-    v.textContent = 'V';
-    v.style.cssText = `
-      left:${Math.random()*100}%;
-      top:100%;
-      font-size:${Math.random()*60+20}px;
-      animation-duration:${Math.random()*10+8}s;
-      animation-delay:0s;
-      color: ${colors[Math.floor(Math.random()*colors.length)]};
-    `;
-    document.body.appendChild(v);
-    setTimeout(() => v.remove(), 18000);
-  }
-  setInterval(spawnV, 2000);
-
-  // V typing messages
-  const messages = [
-    "Hey there, superstar! 👋 Welcome to Devine — where blockchain actually makes sense! I'm V, your AI sidekick. Think of me as your GPS through the crypto universe... except I actually know where I'm going! 😄 Ready to explore?",
-    "No gas? No problem! No clue what you're doing? Also no problem — that's literally what I'm here for! 🚀 Devine connects ALL your assets across EVERY blockchain. One page. Zero stress. Maximum vibes!",
-    "Fun fact: I've never once asked anyone 'but which chain are you on?' because honestly... who cares? Devine handles it ALL! 🌐 You just tell me what you want to do and I make the magic happen! ✨",
-    "Welcome, welcome, WELCOME to Web4! 🎉 The place where your crypto doesn't need a PhD to manage it. I'm V, I'm friendly, I'm funny, and I genuinely cannot wait to show you around Devine!"
-  ];
-  let msgIndex = 0;
-  let charIndex = 0;
-  let currentText = '';
-  const msgEl = document.getElementById('vMessage');
-  const typeCursor = document.getElementById('typeCursor');
-
-  function typeMessage() {
-    if (charIndex < messages[msgIndex].length) {
-      currentText += messages[msgIndex][charIndex];
-      msgEl.textContent = currentText;
-      charIndex++;
-      setTimeout(typeMessage, 30);
-    } else {
-      setTimeout(() => {
-        currentText = '';
-        charIndex = 0;
-        msgIndex = (msgIndex + 1) % messages.length;
-        msgEl.textContent = '';
-        setTimeout(typeMessage, 500);
-      }, 4000);
+    function addMessage(text, isUser) {
+      const msg = document.createElement('div');
+      msg.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+      msg.innerHTML = `
+        <div class="max-w-[80%] p-4 rounded-3xl ${isUser ? 'chat-bubble-user text-black' : 'chat-bubble-ai'}">
+          ${text}
+        </div>
+      `;
+      messagesContainer.appendChild(msg);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-  }
-  setTimeout(typeMessage, 1500);
 
-  // Enter button
-  function enterDivine() {
-    document.body.style.transition = 'all 0.5s';
-    document.body.style.filter = 'brightness(3)';
-    setTimeout(() => {
-      document.body.style.filter = 'brightness(1)';
-    }, 500);
-  }
-</script>
+    // Initial welcome message
+    window.onload = () => {
+      addMessage("Hello Weri. I'm Devine — your Soulbound AI companion.<br>I'm here to protect and speak for your digital identity.", false);
+    };
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, true);
+      input.value = '';
+
+      // Fake thinking
+      const thinking = document.createElement('div');
+      thinking.id = 'thinking';
+      thinking.className = 'text-cyan-400 text-sm pl-4';
+      thinking.textContent = 'Devine is thinking...';
+      messagesContainer.appendChild(thinking);
+
+      // Simple responses for now (no API cost)
+      setTimeout(() => {
+        document.getElementById('thinking').remove();
+        
+        let reply = "I'm still learning. Tell me more about what you want from Devine.";
+        
+        if (text.toLowerCase().includes("who are you")) reply = "I am Devine. Your permanent, soulbound digital companion in Web4.";
+        else if (text.toLowerCase().includes("soulbound")) reply = "Soulbound means once it's yours, it can never be taken or transferred. True ownership.";
+        else if (text.toLowerCase().includes("crmb") || text.toLowerCase().includes("coin")) reply = "$CRMB is the fuel of the Devine ecosystem. More than a token — it's your key.";
+        
+        addMessage(reply, false);
+      }, 1200);
+    }
+
+    // Allow pressing Enter to send
+    document.getElementById('user-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
 </body>
-</html>
+  </html>
